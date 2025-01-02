@@ -7,12 +7,6 @@ from psycopg2 import sql
 import re
 import warnings
 
-print(f"Host: {os.getenv('DB_HOST')}")
-print(f"Port: {os.getenv('DB_PORT')}")
-print(f"User: {os.getenv('DB_USER')}")
-print(f"Password: {os.getenv('DB_PASS')}")
-print(f"Database: {os.getenv('DB_NAME')}")
-
 PGSQL_PARAMS = {
     'host': os.getenv('DB_HOST'),
     'port': int(os.getenv('DB_PORT', 5432)),

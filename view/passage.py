@@ -80,7 +80,7 @@ def render(**args):
                .format(MAX_QUERY_LENGTH)
     if args['end'] < args['start']:
         return '<b>Error:</b> passage end before the start!'
-    with pymysql.connect(**config.PGSQL_PARAMS).cursor() as db:
+    with psycopg2.connect(**PGSQL_PARAMS).cursor() as db:
         clusterings = get_clusterings(db)
         passage = get_verses(db, nro=args['nro'], start_pos=args['start'],
                              end_pos=args['end'], clustering_id=args['clustering'])
@@ -111,29 +111,3 @@ def render(**args):
         poems.get_structured_metadata(db)
         types = poems.get_types(db)
         types.get_names(db)
-
-    if args['format'] in ('csv', 'tsv'):
-        return render_csv([
-            (pas['nro'], pas['verses'][0].pos,
-             '\n'.join([v.text_norm for v in pas['verses']]),
-             ';'.join(p.parish_id if p.parish_id is not None else p.county_id \
-                      for p in poems[pas['nro']].smd.place_lst),
-             poems[pas['nro']].smd.place,
-             ';'.join(c.id for c in poems[pas['nro']].smd.collector_lst),
-             poems[pas['nro']].smd.collector,
-             ';'.join(poems[pas['nro']].type_ids),
-             print_type_list(poems[pas['nro']], types)) \
-            for pas in passages],
-            header=('nro', 'pos', 'snippet', 'place_id', 'place',
-                    'collector_id', 'collector', 'type_id', 'types'),
-            delimiter='\t' if args['format'] == 'tsv' else ',')
-    else:
-        links = generate_page_links(args, clusterings)
-        links['dendrogram'] = link('dendrogram',
-            { 'source': 'nros', 'nro': ','.join(pas['nro'] for pas in passages) },
-            DENDROGRAM_DEFAULTS)
-        data = { 'passages': passages, 'poems': poems, 'types': types,
-                 'clusterings': clusterings,
-                 'maintenance': config.check_maintenance() }
-        return render_template('passage.html', args=args, data=data, links=links)
-
