@@ -1,7 +1,7 @@
 from flask import render_template
 from operator import itemgetter
 import numpy as np
-import pymysql
+import psycopg2
 import scipy.cluster.hierarchy
 from urllib.parse import urlencode
 
@@ -92,7 +92,7 @@ def transform_vert(dd, n, nros):
 @profile
 def render(**args):
     poems, types, target_type, inner = None, None, None, None
-    with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+    with psycopg2.connect(**config.PGSQL_PARAMS).cursor() as db:
         if args['source'] == 'type':
             target_type = Types(ids=[args['type_id']])
             target_type.get_descriptions(db)

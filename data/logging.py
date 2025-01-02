@@ -1,6 +1,6 @@
 from flask import request
 from socket import gethostbyname, gethostname
-import pymysql
+import psycopg2
 import time
 
 import config
@@ -31,20 +31,19 @@ def create_logging_table(db):
 
 def log(level, msg):
     if config.ENABLE_LOGGING_TO_DB:
-        with pymysql.connect(**config.MYSQL_PARAMS) as db_con:
-            with db_con.cursor() as db:
-                db.execute('SHOW TABLES LIKE %s;', (config.LOGGING_TABLE_NAME,))
-                if len(list(db.fetchall())) <= 0:
-                    create_logging_table(db)
+        with psycopg2.connect(**PGSQL_PARAMS) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute('SELECT 1 FROM pg_tables WHERE schemaname = %s AND tablename = %s;', ('public', config.LOGGING_TABLE_NAME))
+                if cursor.rowcount == 0:
+                    create_logging_table(cursor)
                 if len(msg) > 2000:
-                    msg = msg[:1997] + '...'
-                db.execute('INSERT INTO {} (level, hostname, msg, user_agent) '
-                           'VALUES (%s, %s, %s, %s)'\
-                           .format(config.LOGGING_TABLE_NAME),
-                           (level, gethostbyname(gethostname()), msg,
-                            request.user_agent.string))
-            db_con.commit()
-
+                    msg = msg[:1997] + '...'  # Handle message longer than 2000 characters
+                cursor.execute(
+                    'INSERT INTO {} (level, hostname, msg, user_agent) '
+                    'VALUES (%s, %s, %s, %s)'.format(config.LOGGING_TABLE_NAME),
+                    (level, gethostbyname(gethostname()), msg, request.user_agent.string)
+                )
+            conn.commit()
 # FIXME this function does more than just profiling -- consider
 # changing name to sth like serve_request()
 def profile(fun):

@@ -1,7 +1,7 @@
 from flask import render_template
 import numpy as np
 from operator import itemgetter
-import pymysql
+import psycopg2
 import scipy.cluster.hierarchy
 
 from shortsim.align import align
@@ -81,14 +81,14 @@ def merge_alignments(poems, merges, v_sims):
 @profile
 def render(**args):
     poems = Poems(nros=args['nro'])
-    with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+    with psycopg2.connect(**PGSQL_PARAMS).cursor() as db:
         poems.get_raw_meta(db)
         poems.get_structured_metadata(db)
         poems.get_text(db)
         poems.get_similar_poems(db, within=True)
         types = poems.get_types(db)
         types.get_names(db)
-
+        
     m = make_sim_mtx(poems)
     m_onesided = make_sim_mtx(poems, onesided=True)
     d = sim_to_dist(m)

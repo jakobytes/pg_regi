@@ -1,6 +1,6 @@
 from collections import defaultdict
 from flask import render_template
-import pymysql
+import psycopg2
 import re
 from subprocess import Popen, PIPE
 
@@ -62,7 +62,7 @@ def render(**args):
     # - some refactoring
     # - bold for captions
     poems = Poems(nros=[args['nro1'], args['nro2']])
-    with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+    with psycopg2.connect(**PGSQL_PARAMS).cursor() as db:
         poems.get_raw_meta(db)
         poems.get_structured_metadata(db)
         poems.get_text(db)

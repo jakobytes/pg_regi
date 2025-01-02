@@ -1,6 +1,6 @@
 from collections import defaultdict, OrderedDict
 from flask import render_template
-import pymysql
+import psycopg2
 from urllib.parse import urlencode
 
 import config
@@ -40,33 +40,40 @@ def render(**args):
                 seen_clust.add(v2.clust_id)
         return nbclust
 
-    with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
-        # the target verse (with nro and pos specified in args)
-        verse = get_verses(
-            db, nro=args['nro'], start_pos=args['pos'],
-            end_pos=args['pos'], clustering_id=args['clustering'])[0]
-        # verse cluster
-        verses = get_verses(db, clust_id=(verse.clust_id,),
-                            clustering_id=args['clustering'])
-        verses_by_src = _group_by_source(verses)
-        # poem metadata
-        poems = Poems(nros=list(verses_by_src.keys()))
-        poems.get_structured_metadata(db)
-        # poem types
-        types = poems.get_types(db)
-        types.get_names(db)
-        # neighboring clusters
-        verses_nbclust = get_verse_cluster_neighbors(
-            db, (verse.clust_id,), clustering_id=args['clustering'])
-        # clusterings
-        clusterings = get_clusterings(db)
+    with psycopg2.connect(**PGSQL_PARAMS) as conn:
+        with conn.cursor() as cursor:
+            # Get the target verse
+            verse = get_verses(
+                cursor, nro=args['nro'], start_pos=args['pos'],
+                end_pos=args['pos'], clustering_id=args['clustering'])[0]
+            
+            # Verse cluster
+            verses = get_verses(cursor, clust_id=(verse.clust_id,),
+                                clustering_id=args['clustering'])
+            
+            verses_by_src = _group_by_source(verses)
+            
+            # Poem metadata
+            poems = Poems(nros=list(verses_by_src.keys()))
+            poems.get_structured_metadata(cursor)
+            
+            # Poem types
+            types = poems.get_types(cursor)
+            types.get_names(cursor)
+            
+            # Neighboring clusters
+            verses_nbclust = get_verse_cluster_neighbors(
+                cursor, (verse.clust_id,), clustering_id=args['clustering'])
+            
+            # Clusterings
+            clusterings = get_clusterings(cursor)
 
     nbclust = _group_nbclust(verses_nbclust, verses)
 
     if args['format'] in ('csv', 'tsv'):
         return render_csv([
             (v.nro, v.pos, v.text_norm,
-             ';'.join(p.parish_id if p.parish_id is not None else p.county_id \
+             ';'.join(p.parish_id if p.parish_id is not None else p.county_id 
                       for p in poems[v.nro].smd.place_lst),
              poems[v.nro].smd.place,
              ';'.join(c.id for c in poems[v.nro].smd.collector_lst),
@@ -98,4 +105,3 @@ def render(**args):
                      if config.VISUALIZATIONS_URL else None
         }
         return render_template('verse.html', args=args, data=data, links=links)
-

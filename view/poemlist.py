@@ -1,7 +1,7 @@
 from collections import defaultdict
 from flask import render_template
 from operator import itemgetter
-import pymysql
+import psycopg2
 from urllib.parse import urlencode
 
 import config
@@ -48,7 +48,7 @@ def get_by_type(db, type_id):
 @profile
 def render(**args):
     data = {}
-    with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+    with psycopg2.connect(**PGSQL_PARAMS).cursor() as db:
         if args['source'] == 'type':
             data = get_by_type(db, args['id'])
         elif args['source'] == 'collector':
@@ -95,4 +95,3 @@ def render(**args):
                     + urlencode({'parish_name': place_data.parish_name })
 
     return render_template('poemlist.html', args=args, data=data, links=links)
-

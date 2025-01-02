@@ -68,7 +68,7 @@ def get_poem_network(db, poems, t=0.1, maxdepth=3, maxnodes=30):
 def render(**args):
     poemnet, smd = None, None
     poems = Poems(nros=args['nro'])
-    with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+    with psycopg2.connect(**PGSQL_PARAMS).cursor() as db:
         poemnet = get_poem_network(
             db, poems, t=args['t'],
             maxdepth=args['maxdepth'], maxnodes=args['maxnodes'])
@@ -79,4 +79,3 @@ def render(**args):
     data = { 'poemnet': poemnet, 'types': types,
              'maintenance': config.check_maintenance() }
     return render_template('poemnet.html', args=args, data=data, links=links)
-

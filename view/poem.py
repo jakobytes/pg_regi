@@ -2,7 +2,7 @@ from flask import render_template
 import lxml.etree as ET
 from operator import itemgetter
 import math
-import pymysql
+import psycopg2
 import re
 
 from collections import Counter, defaultdict
@@ -102,7 +102,7 @@ def render(**args):
     clusterings = None
     sim_poems, types = None, None
     verse_poems, linked_poems, poems_sharing_verses = None, None, None
-    with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+    with psycopg2.connect(**PGSQL_PARAMS).cursor() as db:
         clusterings = get_clusterings(db)
         p.get_duplicates_and_parents(db)
         p.get_poem_cluster_info(db)

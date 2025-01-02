@@ -1,6 +1,6 @@
 from collections import defaultdict
 from flask import render_template
-import pymysql
+import psycopg2
 
 import config
 from data.logging import profile
@@ -53,13 +53,13 @@ DEFAULT_PAGES = [
 def render(**args):
     maintenance = config.check_maintenance()
     if args['q'] is None:
-        with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+        with psycopg2.connect(**PGSQL_PARAMS).cursor() as db:
             pages = get_page_content(db, 'search_idx')
         data = { 'pages': pages if pages is not None else DEFAULT_PAGES }
         return render_template('search_idx.html', data = data)
     else:
         r_verses, r_types, r_meta = [], [], []
-        with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+        with psycopg2.connect(**PGSQL_PARAMS).cursor() as db:
             r_types = search_types(db, args['q'])
             r_meta = search_meta(db, args['q'])
             r_smd = search_smd(db, args['q'])

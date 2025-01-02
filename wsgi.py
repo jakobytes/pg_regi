@@ -130,10 +130,11 @@ def show_search():
     args = getargs(request, view.search.DEFAULTS)
     # If a poem ID or title was entered in the search box -> redirect to the poem.
     if args['q'] is not None:
-        with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
-            nro = get_poem_by_id_or_title(db, args['q'])
-            if nro is not None:
-                return redirect('/poem?nro={}'.format(nro))
+        with psycopg2.connect(**PGSQL_PARAMS) as conn:
+            with conn.cursor() as cursor:
+                nro = get_poem_by_id_or_title(db, args['q'])
+                if nro is not None:
+                    return redirect('/poem?nro={}'.format(nro))
     result = view.search.render(**args)
     return _compact(result)
 

@@ -1,0 +1,16 @@
+./config.py:8:MYSQL_PARAMS = {
+./config.py:88:        with pymysql.connect(**MYSQL_PARAMS).cursor() as db:
+./config.py:107:    with pymysql.connect(**MYSQL_PARAMS).cursor() as db:
+./view/passage.py:83:    with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+./view/poem.py:105:    with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+./view/poemdiff.py:65:    with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+./view/multidiff.py:84:    with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+./view/dendrogram.py:95:    with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+./view/poemnet.py:71:    with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+./view/verse.py:43:    with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+./view/search.py:56:        with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+./view/search.py:62:        with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+./view/clustnet.py:64:    with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+./view/poemlist.py:51:    with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
+./data/logging.py:34:        with pymysql.connect(**config.MYSQL_PARAMS) as db_con:
+./wsgi.py:133:        with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:

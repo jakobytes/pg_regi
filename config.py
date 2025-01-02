@@ -1,19 +1,27 @@
+#Modified for Postgresql
+
 import os
 from operator import itemgetter
-import pymysql
+import psycopg2
+from psycopg2 import sql
 import re
 import warnings
 
+print(f"Host: {os.getenv('DB_HOST')}")
+print(f"Port: {os.getenv('DB_PORT')}")
+print(f"User: {os.getenv('DB_USER')}")
+print(f"Password: {os.getenv('DB_PASS')}")
+print(f"Database: {os.getenv('DB_NAME')}")
 
-MYSQL_PARAMS = {
-    'host' : os.getenv('DB_HOST'),
-    'port' : int(os.getenv('DB_PORT')),
-    'user' : os.getenv('DB_USER'),
-    'password' : os.getenv('DB_PASS'),
-    'database' : os.getenv('DB_NAME')
+PGSQL_PARAMS = {
+    'host': os.getenv('DB_HOST'),
+    'port': int(os.getenv('DB_PORT', 5432)),
+    'user': os.getenv('DB_USER', 'csc'),
+    'password': os.getenv('DB_PASS'),
+    'dbname': os.getenv('DB_NAME')
 }
 
-VISUALIZATIONS_URL = os.getenv('VISUALIZATIONS_URL')
+# VISUALIZATIONS_URL = os.getenv('VISUALIZATIONS_URL')
 
 SEARCH_LIMIT = 1000
 ENABLE_LOGGING_TO_DB = not not os.getenv('DB_LOGGING')
@@ -82,8 +90,42 @@ TABLE_ERRMSG = {
   'verses_cl'      : 'The side-by-side comparisons will not be available.',
 }
 
-
 def setup_tables():
+    try:
+        with psycopg2.connect(**PGSQL_PARAMS) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT tablename 
+                    FROM pg_catalog.pg_tables 
+                    WHERE schemaname = 'public';
+                """)
+                db_tables = set(map(itemgetter(0), cursor.fetchall()))
+                
+                for tbl in TABLES:
+                    TABLES[tbl] = tbl in db_tables
+    except psycopg2.OperationalError:
+        raise RuntimeError('Cannot connect to the PostgreSQL database. Terminating.')
+
+    for tbl in TABLES:
+        if not TABLES[tbl]:
+            if tbl in ESSENTIAL_TABLES:
+                raise RuntimeError(f'Fatal: table `{tbl}` not found. {TABLE_ERRMSG[tbl]}')
+            else:
+                warnings.warn(f'Table `{tbl}` not found. {TABLE_ERRMSG[tbl]}')
+
+def check_maintenance():
+    try:
+        with psycopg2.connect(**PGSQL_PARAMS) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT SUM(CASE WHEN ready != 1 THEN 1 ELSE 0 END) 
+                    FROM dbmeta;
+                """)
+                result = cursor.fetchone()
+                return result[0] > 0
+    except psycopg2.Error as e:
+        raise RuntimeError(f'Error checking maintenance mode: {e}')
+""" def setup_tables():
     try:
         with pymysql.connect(**MYSQL_PARAMS).cursor() as db:
             db.execute('SHOW TABLES;')
@@ -108,4 +150,4 @@ def check_maintenance():
         db.execute('SELECT SUM(ready != 1) FROM dbmeta;')
         result = db.fetchall()
         return result[0][0] > 0
-
+"""
